@@ -24,7 +24,13 @@ if ( empty($_POST['search']) ) {
     $result = json_encode($result);
 } else {
     
-    $search = urlencode($_POST['search']);
+    $search = strtolower($_POST['search']);
+    
+    if ( in_array( $search, array('sp','rj','bh')) ) {
+        $search = urlencode('transito '.$_POST['search']);
+    } else {
+        $search = urlencode($_POST['search']);
+    }
     
     $twitter = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20twitter.search%20where%20q%20%3D%20'{$search}'and%20rpp%20%3D%2030&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=");
     $meme    = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20meme.search%20(30)%20where%20query%20%3D'{$search}'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
@@ -76,16 +82,21 @@ if ( empty($_POST['search']) ) {
         $result['refresh'] = 1;
         $result['new']     = count($tmpArray);
         $result['results'] = $tmpArray;
-        $result = json_encode($tmpArray);
+        $result = json_encode($result);
     } else {
         
         if ( $serializedArray == $_SESSION['lastResult'] ) {
            $result = json_encode($result);
         } else {
             $result['refresh'] = 1;
-            $result['new']     = ;
+            
+            $diff = array_diff( $tmpArray, unserialize($_SESSION['lastResult']) );
+            
+            $result['new']     = count($diff);
+            
             $result['results'] = $tmpArray;
-            $result = json_encode($tmpArray);
+            
+            $result = json_encode($result);
         }
     }
 }
