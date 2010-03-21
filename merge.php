@@ -48,7 +48,7 @@ for ($i = 0; $i < 10; $i++) {
 	echo 'texto: ' . $twitterResult[$i]->text . '<br />';
 	echo 'link:  http://twitter.com/' . $twitterResult[$i]->from_user . '/status/' . $twitterResult[$i]->id;
 	echo '<hr />';
-	echo 'data: ' . $memeResult[$i]->timestamp . '<br />';
+	echo 'data: ' . date('d/m/Y H:i:s', $memeResult[$i]->timestamp/1000 ) . '<br />';
 	echo 'texto: ' . $memeResult[$i]->content . '<br />';
 	echo 'link: ' . $memeResult[$i]->url;
 }
