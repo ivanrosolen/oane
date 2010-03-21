@@ -42,7 +42,7 @@ if ( empty($_POST['search']) ) {
         if ( isset($twitterResult[$key]) ) {
             $t = new StdClass();
             $t->data = strtotime($twitterResult[$key]->created_at);
-            $t->texto = utf8_decode($twitterResult[$key]->text);
+            $t->texto = htmlentities(utf8_decode($twitterResult[$key]->text), ENT_QUOTES);
             $t->url = 'http://twitter.com/' . $twitterResult[$key]->from_user . '/status/' . $twitterResult[$key]->id;
             $t->image = $twitterResult[$key]->profile_image_url;
             
