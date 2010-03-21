@@ -35,9 +35,14 @@ $meme = json_decode($meme);
 $twitterResult = $twitter->query->results->results;
 $memeResult = $meme->query->results->post;
 
-
+/*
+$d = new DateTime( 'Sat, 20 Mar 2010 19:29:12 +0000' );
+$d->setTimezone( new DateTimeZone( 'America/Sao_Paulo' ) );
+$d->format( 'd/m/Y H:m:s' );
+*/
 
 for ($i = 0; $i < 10; $i++) {
+    
 	echo '<hr />';
 	echo 'data: ' . date('d/m/Y H:i:s', strtotime($twitterResult[$i]->created_at)) . '<br />';
 	echo 'texto: ' . $twitterResult[$i]->text . '<br />';
