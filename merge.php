@@ -2,12 +2,7 @@
 session_start();
 
 date_default_timezone_set( 'America/Sao_Paulo' );
-    
-function getPhoto($guid) {
-    $info = json_decode(file_get_contents("http://query.yahooapis.com/v1/public/yql?q=SELECT%20avatar_url%20FROM%20meme.info%20WHERE%20owner_guid%3D%27{$guid}%27&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="));
-    return $info->query->results->meme->avatar_url;
-}
-
+   
 function orderByDate ($a, $b) {
     if ( $a->data == $b->data ) {
         return 0;
@@ -18,22 +13,20 @@ function orderByDate ($a, $b) {
 
 $result = array( 'refresh' => 0, 'new' => 0, 'results' => '' );
 
-preg_replace( '/[ˆa-zA-Z0-9]/', '', $_POST['search'] );
-
-if ( empty($_POST['search']) ) {
+if ( !isset($_POST['search']) || empty($_POST['search']) ) {
     $result = json_encode($result);
 } else {
     
     $search = strtolower($_POST['search']);
     
     if ( in_array( $search, array('sp','rj','bh')) ) {
-        $search = urlencode('transito '.$_POST['search']);
+        $search = urlencode('transito'.$_POST['search']);
     } else {
         $search = urlencode($_POST['search']);
     }
     
-    $twitter = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20twitter.search%20where%20q%20%3D%20'{$search}'and%20rpp%20%3D%2030&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=");
-    $meme    = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20meme.search%20(30)%20where%20query%20%3D'{$search}'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
+    $twitter = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20created_at%2C%20text%20from%20twitter.search%20where%20q%20%3D%20'{$search}'and%20rpp%20%3D%2030&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
+    $meme    = file_get_contents("https://query.yahooapis.com/v1/public/yql?q=select%20timestamp%2C%20content%20from%20meme.search%20(30)%20where%20query%20%3D'{$search}'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys");
     
     $twitter = json_decode($twitter);
     $meme    = json_decode($meme);
@@ -44,26 +37,19 @@ if ( empty($_POST['search']) ) {
     $dados = array();
     
     foreach ( $twitterResult as $key => $value) {
-        
-        if ( isset($twitterResult[$key]) ) {
-            $t = new StdClass();
-            $t->data = strtotime($twitterResult[$key]->created_at);
-            $t->texto = htmlentities(utf8_decode($twitterResult[$key]->text), ENT_QUOTES);
-            $t->url = 'http://twitter.com/' . $twitterResult[$key]->from_user . '/status/' . $twitterResult[$key]->id;
-            $t->image = $twitterResult[$key]->profile_image_url;
-            
-            array_push( $dados, $t );
-        }
-        
-        if ( isset($memeResult[$key]) ) {
-            $m = new StdClass();
-            $m->data = $memeResult[$key]->timestamp/1000;
-            $m->texto = htmlentities(utf8_decode($memeResult[$key]->content), ENT_QUOTES);
-            $m->url = $memeResult[$key]->url;
-            $m->image = getPhoto($memeResult[$key]->guid);
-            
-            array_push( $dados, $m );
-        }
+        $t = new StdClass();
+        $t->data  = strtotime($value->created_at);
+        $t->texto = $value->text;
+        $t->image = '_images/twitter.png';
+        array_push( $dados, $t );
+    }
+    
+    foreach ( $memeResult as $key => $value) {
+        $m = new StdClass();
+        $m->data  = $value->timestamp/1000;
+        $m->texto = $value->content;
+        $m->image = '_imagens/meme.gif';
+        array_push( $dados, $m );
     }
     usort( $dados, 'orderByDate' );
     
@@ -86,16 +72,25 @@ if ( empty($_POST['search']) ) {
     } else {
         
         if ( $serializedArray == $_SESSION['lastResult'] ) {
-           $result = json_encode($result);
-        } else {
-            $result['refresh'] = 1;
-            
-            $diff = array_diff( $tmpArray, unserialize($_SESSION['lastResult']) );
-            
-            $result['new']     = count($diff);
-            
+            $result['refresh'] = 0;
+            $result['new']     = 0;
             $result['results'] = $tmpArray;
+            $result = json_encode($result);
+        } else {
+            $countTmp = count($tmpArray);
+            $bar = unserialize($_SESSION['lastResult']);
+            $total = 0;
+            for ($i = 0; $i < $countTmp; $i++) {
+                if ($tmpArray[$i]->texto != $bar[$i]->texto) {
+                    $total++;
+                }
+            }
             
+            $_SESSION['lastResult'] = $serializedArray;
+
+            $result['refresh'] = 1;
+            $result['new']     = $total;
+            $result['results'] = $tmpArray;
             $result = json_encode($result);
         }
     }
