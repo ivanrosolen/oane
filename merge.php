@@ -52,7 +52,7 @@ if ( empty($_POST['search']) ) {
         if ( isset($memeResult[$key]) ) {
             $m = new StdClass();
             $m->data = $memeResult[$key]->timestamp/1000;
-            $m->texto = utf8_decode($memeResult[$key]->content);
+            $m->texto = htmlentities(utf8_decode($memeResult[$key]->content), ENT_QUOTES);
             $m->url = $memeResult[$key]->url;
             $m->image = getPhoto($memeResult[$key]->guid);
             
